@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>warngen testing tool</title>
+    <title>WARNGEN testing tool</title>
     <style>
         :root {
             --bg-main: #121315;
@@ -171,7 +171,7 @@
             background: #111214;
         }
         #layer-list:empty::before {
-            content: "no layers config";
+            content: "no polygons :(";
             display: block;
             padding: 12px;
             text-align: center;
@@ -298,13 +298,13 @@
         </div>
 
         <div class="section">
-            <span class="section-label">active layers</span>
+            <span class="section-label">polygons</span>
             <div id="layer-list"></div>
-            <button class="btn btn-danger btn-block" id="btn-delete">delete selection</button>
+            <button class="btn btn-danger btn-block" id="btn-delete">delete selected polygon</button>
         </div>
 
         <div class="section" style="margin-top: auto;">
-            <button class="btn btn-success btn-block" id="btn-export">export layer map</button>
+            <button class="btn btn-success btn-block" id="btn-export">export png</button>
         </div>
     </div>
 
@@ -626,7 +626,7 @@
             redraw();
 
             const link = document.createElement('a');
-            link.download = 'map_export.png';
+            link.download = "WGTT_custom.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
 
