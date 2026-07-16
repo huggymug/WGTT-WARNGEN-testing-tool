@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>warngen testing tool</title>
+    <style>
+        :root {
+            --bg-main: #121315;
+            --sidebar-bg: #18191c;
+            --item-bg: #202226;
+            --item-hover: #282a2f;
+            --border-color: #2c2e33;
+            --text-color: #dcddde;
+            --text-dim: #72767d;
+            --accent: #4f545c;
+            --accent-hover: #686d73;
+            --danger: #f04747;
+            --success: #43b581;
+            --radius: 2px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 300px;
+            min-width: 300px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            box-sizing: border-box;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .header {
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .section-label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .field label {
+            font-size: 0.8rem;
+            color: var(--text-color);
+        }
+
+        input[type="text"], input[type="number"] {
+            background: var(--item-bg);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: var(--radius);
+            font-size: 0.85rem;
+        }
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #7289da;
+        }
+
+        .color-picker-row {
+            display: flex;
+            gap: 6px;
+        }
+        .color-box {
+            position: relative;
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        input[type="color"] {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 42px;
+            height: 42px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .color-picker-row input[type="text"] {
+            flex-grow: 1;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--item-bg);
+            padding: 4px 10px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+        }
+        .slider-row input[type="range"] {
+            flex-grow: 1;
+            accent-color: #7289da;
+        }
+        .slider-row span {
+            font-size: 0.8rem;
+            width: 30px;
+            text-align: right;
+            color: var(--text-dim);
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.1s ease;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn:hover { background-color: var(--accent-hover); }
+        .btn-secondary { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-color); }
+        .btn-secondary:hover { background-color: var(--item-hover); }
+        .btn-danger { background-color: transparent; border: 1px solid var(--border-color); color: var(--danger); }
+        .btn-danger:hover { background-color: var(--danger); color: white; border-color: var(--danger); }
+        .btn-success { background-color: transparent; border: 1px solid var(--border-color); color: var(--success); }
+        .btn-success:hover { background-color: var(--success); color: white; border-color: var(--success); }
+
+        .btn-group { display: flex; gap: 6px; }
+        .btn-block { width: 100%; box-sizing: border-box; }
+
+        #layer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            padding: 4px;
+            border-radius: var(--radius);
+            background: #111214;
+        }
+        #layer-list:empty::before {
+            content: "no layers config";
+            display: block;
+            padding: 12px;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+        .layer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: var(--item-bg);
+            border-radius: 2px;
+            border-left: 3px solid #fff;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .layer-item:hover { background: var(--item-hover); }
+        .layer-item.selected { border: 1px solid #7289da; border-left: 3px solid #fff; }
+
+        .meta-text {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        #viewport {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: #0e1012;
+            cursor: grab;
+        }
+        #viewport.panning { cursor: grabbing; }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: 0 0;
+        }
+        canvas { display: block; }
+
+        #ui-overlay {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            display: flex;
+            gap: 2px;
+            background: var(--sidebar-bg);
+            padding: 2px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+        }
+        .ui-btn {
+            background: transparent;
+            color: var(--text-color);
+            border: none;
+            width: 28px;
+            height: 28px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ui-btn:hover { background: var(--item-hover); }
+        .ui-btn-text { width: auto; padding: 0 6px; font-size: 0.75rem; }
+
+        #file-upload { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="header">
+            <h1>WARNGEN testing tool</h1>
+        </div>
+        
+        <div class="section">
+            <span class="section-label">base image</span>
+            <button class="btn btn-secondary btn-block" onclick="document.getElementById('file-upload').click()">
+                choose background file
+            </button>
+            <input type="file" id="file-upload" accept="image/png">
+            <div id="file-info" class="meta-text">no file loaded</div>
+        </div>
+
+        <div class="section">
+            <span class="section-label">layer settings</span>
+            
+            <div class="field">
+                <label>label</label>
+                <input type="text" id="layer-name" value="zone alpha">
+            </div>
+
+            <div class="field">
+                <label>color</label>
+                <div class="color-picker-row">
+                    <div class="color-box">
+                        <input type="color" id="picker-color" value="#ef4444">
+                    </div>
+                    <input type="text" id="hex-color" value="#ef4444">
+                </div>
+            </div>
+
+            <div class="field">
+                <label>opacity</label>
+                <div class="slider-row">
+                    <input type="range" id="layer-opacity" min="0" max="100" value="50">
+                    <span id="opacity-label">50%</span>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>stroke width</label>
+                <input type="number" id="stroke-width" min="1" max="10" value="3">
+            </div>
+
+            <div class="btn-group" style="margin-top: 4px;">
+                <button class="btn" id="btn-save" style="flex: 2;">save polygon</button>
+                <button class="btn btn-secondary" id="btn-reset" style="flex: 1;">clear</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <span class="section-label">active layers</span>
+            <div id="layer-list"></div>
+            <button class="btn btn-danger btn-block" id="btn-delete">delete selection</button>
+        </div>
+
+        <div class="section" style="margin-top: auto;">
+            <button class="btn btn-success btn-block" id="btn-export">export layer map</button>
+        </div>
+    </div>
+
+    <div id="viewport">
+        <div id="canvas-container">
+            <canvas id="editorCanvas"></canvas>
+        </div>
+        
+        <div id="ui-overlay">
+            <button class="ui-btn" id="zoom-in">+</button>
+            <button class="ui-btn" id="zoom-out">−</button>
+            <button class="ui-btn ui-btn-text" id="zoom-fit">fit screen</button>
+        </div>
+    </div>
+
+    <script>
+        let imgSource = null;
+        let savedLayers = []; 
+        let activePoints = []; 
+        let activeSelectionIndex = null;
+        
+        let isPanning = false;
+        let hasMovedMouse = false;
+        let zoom = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        let dragStartX = 0;
+        let dragStartY = 0;
+
+        const fileUpload = document.getElementById('file-upload');
+        const viewport = document.getElementById('viewport');
+        const container = document.getElementById('canvas-container');
+        const canvas = document.getElementById('editorCanvas');
+        const ctx = canvas.getContext('2d');
+        const fileInfo = document.getElementById('file-info');
+        
+        const inputName = document.getElementById('layer-name');
+        const inputColor = document.getElementById('picker-color');
+        const inputHex = document.getElementById('hex-color');
+        const inputOpacity = document.getElementById('layer-opacity');
+        const labelOpacity = document.getElementById('opacity-label');
+        const inputStroke = document.getElementById('stroke-width');
+        
+        const listContainer = document.getElementById('layer-list');
+        const btnSave = document.getElementById('btn-save');
+        const btnReset = document.getElementById('btn-reset');
+        const btnDelete = document.getElementById('btn-delete');
+        const btnExport = document.getElementById('btn-export');
+
+        canvas.width = 100;
+        canvas.height = 100;
+
+        fileUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                imgSource = new Image();
+                imgSource.onload = () => {
+                    canvas.width = imgSource.naturalWidth;
+                    canvas.height = imgSource.naturalHeight;
+                    container.style.width = imgSource.naturalWidth + 'px';
+                    container.style.height = imgSource.naturalHeight + 'px';
+                    fileInfo.innerText = `${imgSource.naturalWidth} × ${imgSource.naturalHeight} px`;
+                    activePoints = [];
+                    fitToScreen();
+                };
+                imgSource.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function fitToScreen() {
+            if (!imgSource) return;
+            const vw = viewport.clientWidth;
+            const vh = viewport.clientHeight;
+            const rx = vw / imgSource.naturalWidth;
+            const ry = vh / imgSource.naturalHeight;
+            
+            zoom = Math.min(rx, ry, 1) * 0.95;
+            offsetX = (vw - (imgSource.naturalWidth * zoom)) / 2;
+            offsetY = (vh - (imgSource.naturalHeight * zoom)) / 2;
+
+            updateTransform();
+            redraw();
+        }
+
+        function updateTransform() {
+            container.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoom})`;
+        }
+
+        function modifyZoom(factor, mx, my) {
+            if (!imgSource) return;
+            const prevZoom = zoom;
+            zoom = Math.max(0.1, Math.min(zoom * factor, 30));
+            
+            offsetX = mx - (mx - offsetX) * (zoom / prevZoom);
+            offsetY = my - (my - offsetY) * (zoom / prevZoom);
+            
+            updateTransform();
+            redraw();
+        }
+
+        viewport.addEventListener('wheel', (e) => {
+            if (!imgSource) return;
+            e.preventDefault();
+            const box = viewport.getBoundingClientRect();
+            modifyZoom(e.deltaY < 0 ? 1.1 : 1 / 1.1, e.clientX - box.left, e.clientY - box.top);
+        }, { passive: false });
+
+        document.getElementById('zoom-in').addEventListener('click', () => modifyZoom(1.2, viewport.clientWidth / 2, viewport.clientHeight / 2));
+        document.getElementById('zoom-out').addEventListener('click', () => modifyZoom(1 / 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2));
+        document.getElementById('zoom-fit').addEventListener('click', fitToScreen);
+        window.addEventListener('resize', () => { if (imgSource) fitToScreen(); });
+
+        viewport.addEventListener('mousedown', (e) => {
+            if (!imgSource) return;
+            
+            isPanning = true;
+            hasMovedMouse = false;
+            dragStartX = e.clientX - offsetX;
+            dragStartY = e.clientY - offsetY;
+            viewport.classList.add('panning');
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                const newOffsetX = e.clientX - dragStartX;
+                const newOffsetY = e.clientY - dragStartY;
+                
+                if (Math.abs(newOffsetX - offsetX) > 3 || Math.abs(newOffsetY - offsetY) > 3) {
+                    hasMovedMouse = true;
+                }
+                
+                offsetX = newOffsetX;
+                offsetY = newOffsetY;
+                updateTransform();
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (!isPanning) return;
+            isPanning = false;
+            viewport.classList.remove('panning');
+
+            if (!hasMovedMouse && e.target.closest('#editorCanvas')) {
+                const box = canvas.getBoundingClientRect();
+                const x = ((e.clientX - box.left) / box.width) * canvas.width;
+                const y = ((e.clientY - box.top) / box.height) * canvas.height;
+
+                activeSelectionIndex = null;
+                activePoints.push({ x, y });
+                redraw();
+            }
+        });
+
+        inputColor.addEventListener('input', (e) => { inputHex.value = e.target.value; syncSelectedStyles(); });
+        inputHex.addEventListener('input', (e) => {
+            if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                inputColor.value = e.target.value;
+                syncSelectedStyles();
+            }
+        });
+        inputOpacity.addEventListener('input', (e) => {
+            labelOpacity.innerText = e.target.value + '%';
+            syncSelectedStyles();
+        });
+        inputStroke.addEventListener('input', syncSelectedStyles);
+        inputName.addEventListener('input', syncSelectedStyles);
+
+        function syncSelectedStyles() {
+            if (activeSelectionIndex !== null && savedLayers[activeSelectionIndex]) {
+                let layer = savedLayers[activeSelectionIndex];
+                layer.name = inputName.value;
+                layer.color = inputColor.value;
+                layer.opacity = parseFloat(inputOpacity.value) / 100;
+                layer.stroke = parseInt(inputStroke.value) || 2;
+                refreshLayersUI();
+                redraw();
+            }
+        }
+
+        btnSave.addEventListener('click', () => {
+            if (activePoints.length < 3) {
+                return;
+            }
+            savedLayers.push({
+                name: inputName.value || "layer",
+                color: inputColor.value,
+                opacity: parseFloat(inputOpacity.value) / 100,
+                stroke: parseInt(inputStroke.value) || 2,
+                points: [...activePoints]
+            });
+            activePoints = [];
+            refreshLayersUI();
+            redraw();
+        });
+
+        btnReset.addEventListener('click', () => { activePoints = []; redraw(); });
+
+        btnDelete.addEventListener('click', () => {
+            if (activeSelectionIndex !== null) {
+                savedLayers.splice(activeSelectionIndex, 1);
+                activeSelectionIndex = null;
+                refreshLayersUI();
+                redraw();
+            }
+        });
+
+        function refreshLayersUI() {
+            listContainer.innerHTML = '';
+            savedLayers.forEach((layer, idx) => {
+                const el = document.createElement('div');
+                el.className = `layer-item ${idx === activeSelectionIndex ? 'selected' : ''}`;
+                el.style.borderLeftColor = layer.color;
+                el.innerHTML = `<span>${layer.name}</span> <span style="color:var(--text-dim); font-size:0.75rem;">(${layer.points.length} nodes)</span>`;
+                
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    activeSelectionIndex = idx;
+                    inputName.value = layer.name;
+                    inputColor.value = layer.color;
+                    inputHex.value = layer.color;
+                    inputOpacity.value = Math.round(layer.opacity * 100);
+                    labelOpacity.innerText = inputOpacity.value + '%';
+                    inputStroke.value = layer.stroke;
+                    refreshLayersUI();
+                    redraw();
+                });
+                listContainer.appendChild(el);
+            });
+        }
+
+        function redraw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!imgSource) return;
+
+            ctx.drawImage(imgSource, 0, 0);
+
+            savedLayers.forEach((layer, idx) => {
+                renderPolygon(layer.points, layer.color, layer.opacity, layer.stroke);
+                
+                if (idx === activeSelectionIndex) {
+                    ctx.save();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = (layer.stroke + 1) / Math.sqrt(zoom);
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath();
+                    layer.points.forEach((p, i) => {
+                        if (i === 0) ctx.moveTo(p.x, p.y);
+                        else ctx.lineTo(p.x, p.y);
+                    });
+                    ctx.closePath();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            });
+
+            if (activePoints.length > 0) {
+                ctx.save();
+                const drawColor = inputColor.value;
+                ctx.strokeStyle = drawColor;
+                ctx.lineWidth = (parseInt(inputStroke.value) || 2) / Math.sqrt(zoom);
+                ctx.beginPath();
+                activePoints.forEach((p, i) => {
+                    if (i === 0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                });
+                ctx.stroke();
+
+                activePoints.forEach((p) => {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.strokeStyle = drawColor;
+                    ctx.lineWidth = 1.5 / Math.sqrt(zoom);
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 4 / Math.sqrt(zoom), 0, Math.PI * 2); 
+                    ctx.fill();
+                    ctx.stroke();
+                });
+                ctx.restore();
+            }
+        }
+
+        function renderPolygon(points, color, opacity, stroke) {
+            if (points.length === 0) return;
+            ctx.save();
+            ctx.beginPath();
+            points.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            });
+            ctx.closePath();
+            
+            let r = 0, g = 0, b = 0;
+            if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(color)){
+                let c = color.substring(1).split('');
+                if(c.length == 3) c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+                let num = parseInt('0x' + c.join(''));
+                r = (num >> 16) & 255;
+                g = (num >> 8) & 255;
+                b = num & 255;
+            }
+            
+            ctx.fillStyle = `rgba(${r},${g},${b},${opacity})`;
+            ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = stroke;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        btnExport.addEventListener('click', () => {
+            if (!imgSource) return;
+            const cacheSelect = activeSelectionIndex;
+            activeSelectionIndex = null;
+            redraw();
+
+            const link = document.createElement('a');
+            link.download = 'map_export.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            activeSelectionIndex = cacheSelect;
+            redraw();
+        });
+    </script>
+</body>
+</html>
