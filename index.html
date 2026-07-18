@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WARNGEN testing tool</title>
+    <link rel="icon" type="image/png" href="favicon.png">
     <style>
         :root {
             --bg-main: #121315;
@@ -73,6 +74,22 @@
         .field label {
             font-size: 0.8rem;
             color: var(--text-color);
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        .checkbox-row input[type="checkbox"] {
+            accent-color: #7289da;
+            cursor: pointer;
+            margin: 0;
+            width: 16px;
+            height: 16px;
         }
 
         input[type="text"], input[type="number"] {
@@ -242,6 +259,7 @@
         .ui-btn-text { width: auto; padding: 0 6px; font-size: 0.75rem; }
 
         #file-upload { display: none; }
+        #watermark-upload { display: none; }
     </style>
 </head>
 <body>
@@ -258,6 +276,19 @@
             </button>
             <input type="file" id="file-upload" accept="image/png">
             <div id="file-info" class="meta-text">no file loaded</div>
+        </div>
+
+        <div class="section">
+            <span class="section-label">branding</span>
+            <button class="btn btn-secondary btn-block" onclick="document.getElementById('watermark-upload').click()">
+                swap watermark image
+            </button>
+            <input type="file" id="watermark-upload" accept="image/png">
+            <div id="watermark-info" class="meta-text">loading default asset...</div>
+            <label class="checkbox-row" style="margin-top: 4px;">
+                <input type="checkbox" id="toggle-watermark" checked>
+                <span>show watermark</span>
+            </label>
         </div>
 
         <div class="section">
@@ -322,6 +353,8 @@
 
     <script>
         let imgSource = null;
+        let watermarkImg = null;
+        let isWatermarkLoaded = false;
         let savedLayers = []; 
         let activePoints = []; 
         let activeSelectionIndex = null;
@@ -335,12 +368,15 @@
         let dragStartY = 0;
 
         const fileUpload = document.getElementById('file-upload');
+        const watermarkUpload = document.getElementById('watermark-upload');
         const viewport = document.getElementById('viewport');
         const container = document.getElementById('canvas-container');
         const canvas = document.getElementById('editorCanvas');
         const ctx = canvas.getContext('2d');
         const fileInfo = document.getElementById('file-info');
+        const watermarkInfo = document.getElementById('watermark-info');
         
+        const toggleWatermark = document.getElementById('toggle-watermark');
         const inputName = document.getElementById('layer-name');
         const inputColor = document.getElementById('picker-color');
         const inputHex = document.getElementById('hex-color');
@@ -357,6 +393,21 @@
         canvas.width = 100;
         canvas.height = 100;
 
+        // Auto-load watermark.png from server with standard anonymous CORS rules
+        watermarkImg = new Image();
+        watermarkImg.crossOrigin = "anonymous"; 
+        watermarkImg.src = 'watermark.png';
+        watermarkImg.onload = () => {
+            isWatermarkLoaded = true;
+            watermarkInfo.innerText = 'using watermark.png';
+            redraw();
+        };
+        watermarkImg.onerror = () => {
+            watermarkInfo.innerText = 'failed to load default asset';
+            console.warn("watermark.png could not be auto-loaded. Double check deployment path.");
+        };
+
+        // Background loading structure
         fileUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -374,6 +425,24 @@
                     fitToScreen();
                 };
                 imgSource.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Optional runtime replacement loader
+        watermarkUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                watermarkImg = new Image();
+                watermarkImg.onload = () => {
+                    isWatermarkLoaded = true;
+                    watermarkInfo.innerText = `swapped (${watermarkImg.naturalWidth}x${watermarkImg.naturalHeight}px)`;
+                    redraw();
+                };
+                watermarkImg.src = evt.target.result;
             };
             reader.readAsDataURL(file);
         });
@@ -463,6 +532,7 @@
             }
         });
 
+        toggleWatermark.addEventListener('change', redraw);
         inputColor.addEventListener('input', (e) => { inputHex.value = e.target.value; syncSelectedStyles(); });
         inputHex.addEventListener('input', (e) => {
             if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
@@ -586,6 +656,15 @@
                     ctx.fill();
                     ctx.stroke();
                 });
+                ctx.restore();
+            }
+
+            // Target dimensions for watermark: 285x76 px at bottom right
+            if (toggleWatermark.checked && isWatermarkLoaded && watermarkImg) {
+                ctx.save();
+                const x = canvas.width - 285;
+                const y = canvas.height - 76;
+                ctx.drawImage(watermarkImg, x, y, 285, 76);
                 ctx.restore();
             }
         }
